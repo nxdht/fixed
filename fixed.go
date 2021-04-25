@@ -20,10 +20,10 @@ type Fixed struct {
 // the following constants can be changed to configure a different number of decimal places - these are
 // the only required changes. only 18 significant digits are supported due to NaN
 
-const nPlaces = 7
-const scale = int64(10 * 10 * 10 * 10 * 10 * 10 * 10)
-const zeros = "0000000"
-const MAX = float64(99999999999.9999999)
+const nPlaces = 8
+const scale = int64(10 * 10 * 10 * 10 * 10 * 10 * 10 * 10)
+const zeros = "00000000"
+const MAX = float64(9999999999.99999999)
 
 const nan = int64(1<<63 - 1)
 
@@ -71,7 +71,7 @@ func NewSErr(s string) (Fixed, error) {
 			if err != nil {
 				return NaN, errors.New("cannot parse")
 			}
-			if i < 0 {
+			if i < 0 || s[0] == '-' {
 				sign = -1
 				i = i * -1
 			}
@@ -195,6 +195,30 @@ func (f Fixed) Abs() Fixed {
 	}
 	f0 := Fixed{fp: f.fp * -1}
 	return f0
+}
+
+func (f Fixed) Floor() Fixed {
+	if f.IsNaN() {
+		return NaN
+	}
+
+	if f.fp < 0 {
+		d := -f.Int()
+		frac := f.Frac()
+		if frac != 0.0 {
+			d = d + 1
+		}
+		return Fixed{fp: -d * scale}
+	}
+	return Fixed{fp: f.Int() * scale}
+}
+
+func (f Fixed) IsPositive() bool {
+	return f.Cmp(ZERO) > 0
+}
+
+func (f Fixed) IsNegative() bool {
+	return f.Cmp(ZERO) < 0
 }
 
 func abs(i int64) int64 {
