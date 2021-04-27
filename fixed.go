@@ -9,7 +9,6 @@ import (
 	"io"
 	"math"
 	"strconv"
-	"strings"
 )
 
 // Fixed is a fixed precision 38.24 number (supports 11.7 digits). It supports NaN.
@@ -41,7 +40,15 @@ func NewS(s string) Fixed {
 
 // NewSErr creates a new Fixed from a string, returning NaN, and error if the string could not be parsed
 func NewSErr(s string) (Fixed, error) {
-	if strings.ContainsAny(s, "eE") {
+	var eIndex, dotIndex int
+	for i, v := range s {
+		if v == '.' {
+			dotIndex = i
+		} else if v == 'e' || v == 'E' {
+			eIndex = i
+		}
+	}
+	if eIndex != -1 {
 		f, err := strconv.ParseFloat(s, 64)
 		if err != nil {
 			return NaN, err
@@ -51,7 +58,7 @@ func NewSErr(s string) (Fixed, error) {
 	if "NaN" == s {
 		return NaN, nil
 	}
-	period := strings.Index(s, ".")
+	period := dotIndex
 	var i int64
 	var f int64
 	var sign int64 = 1
